@@ -1,0 +1,98 @@
+"""Evaluate saved models on held-out test data.
+Produces metrics & confusion matrices; saves ROC curve for probabilistic models.
+"""
+from __future__ import annotations
+from pathlib import Path
+import joblib
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    silhouette_score,
+)
+
+from data_processing import load_artifacts
+from models import get_classification_models
+
+FIG_DIR = Path("reports/evaluation_figures")
+FIG_DIR.mkdir(parents=True, exist_ok=True)
+MODELS_DIR = Path("models")
+
+
+def evaluate(prefix: str = "spam"):
+    processed = load_artifacts(prefix=prefix)
+    X_test, y_test = processed.X_test, processed.y_test
+
+    # iterate through expected model filenames
+    results = {}
+    for name in get_classification_models().keys():
+        path = MODELS_DIR / f"{name}.joblib"
+        if not path.exists():
+            continue
+        model = joblib.load(path)
+        preds = model.predict(X_test)
+        probas = None
+        if hasattr(model, "predict_proba"):
+            try:
+                probas = model.predict_proba(X_test)[:, 1]
+            except Exception:
+                probas = None
+        acc = accuracy_score(y_test, preds)
+        prec = precision_score(y_test, preds, zero_division=0)
+        rec = recall_score(y_test, preds, zero_division=0)
+        f1 = f1_score(y_test, preds, zero_division=0)
+        roc_auc = None
+        if probas is not None:
+            roc_auc = roc_auc_score(y_test, probas)
+            fpr, tpr, _ = roc_curve(y_test, probas)
+            plt.figure(figsize=(4,4))
+            plt.plot(fpr, tpr, label=f"{name} AUC={roc_auc:.3f}")
+            plt.plot([0,1],[0,1], linestyle="--", color="grey")
+            plt.xlabel("FPR")
+            plt.ylabel("TPR")
+            plt.title("ROC Curve")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(FIG_DIR / f"roc_{name}.png", dpi=150)
+            plt.close()
+
+        cm = confusion_matrix(y_test, preds)
+        disp = ConfusionMatrixDisplay(cm)
+        disp.plot(cmap="Blues")
+        plt.title(f"Confusion Matrix - {name}")
+        plt.tight_layout()
+        plt.savefig(FIG_DIR / f"cm_{name}.png", dpi=150)
+        plt.close()
+
+        results[name] = {
+            "accuracy": float(acc),
+            "precision": float(prec),
+            "recall": float(rec),
+            "f1": float(f1),
+            "roc_auc": float(roc_auc) if roc_auc is not None else None,
+        }
+
+    # clustering evaluation (silhouette on train just for separation) optional
+    cluster_path = MODELS_DIR / "kmeans_pca.joblib"
+    if cluster_path.exists():
+        cluster_model = joblib.load(cluster_path)
+        # silhouette requires at least 2 labels present
+        labels = cluster_model.predict(processed.X_test)
+        if len(set(labels)) > 1:
+            sil = silhouette_score(processed.X_test, labels)
+            results["kmeans_pca"] = {"silhouette": float(sil)}
+
+    print("Evaluation results:")
+    for k, v in results.items():
+        print(k, v)
+    return results
+
+
+if __name__ == "__main__":
+    evaluate()

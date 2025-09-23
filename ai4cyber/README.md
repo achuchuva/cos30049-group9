@@ -11,25 +11,99 @@ The project consists of three phases:
 
 The Machine Learning Web Application aims to deliver an interactive platform for users to engage with machine learning models and visualize data insights. The primary goal is to demonstrate practical machine learning applications in real-world cybersecurity-related scenarios, enhancing user interaction and understanding of the underlying models.
 
-## Basic Provided Spam Email Dataset
-This dataset contains emails labeled as either **ham (legitimate)** or **spam (junk email)**.
+## Spam Detection Pipeline
 
-- **Columns**
-  - `text`: The content of the email
-  - `spam`: Label (0 = ham, 1 = spam) 
+### Repository Structure
+```
+ai4cyber/
+  data/                     # Folder containing raw datasets
+  data/emails.csv           # Provided raw dataset (text, spam)
+  data_processing.py        # Loading, cleaning, TF-IDF feature generation
+  eda.py                    # Generates figures for exploratory analysis
+  models.py                 # Model factory functions
+  train.py                  # Trains and saves models & artifacts
+  evaluate.py               # Evaluates saved models on test set
+  main.py                   # CLI orchestrator (eda, train, evaluate)
+  models/                   # Persisted trained models (.joblib)
+  artifacts/                # Vectorizer & dataset splits
+  reports/figures/          # Saved plots & evaluation charts
+```
 
-## Labels
-- **0 → Ham**: Normal, non-spam emails
-- **1 → Spam**: Junk or unwanted emails
+### Installation (uv)
+Ensure you have `uv` installed, then run inside project root:
+```
+uv sync
+```
 
-## Feature Extraction Ideas
-Students may extract features such as:
-- Email length (characters, words)
-- Frequency of special characters (`!`, `$`, etc.)
-- Presence of keywords (e.g., *free, win, offer*)
-- Word frequency or TF-IDF values
+### Commands
+Preprocess data based on csv file
+```
+python main.py preprocess --data data/emails.csv
+```
 
-## Visualization Ideas
-- Distribution of email lengths (spam vs. ham)
-- Word clouds for spam and ham
-- Histogram of keyword frequencies
+Run EDA (generates plots under `reports/data_figures`):
+```
+python main.py eda --data data/emails.csv
+```
+
+Train models (Logistic Regression, Naive Bayes, Linear SVM, Random Forest + KMeans clustering):
+```
+python main.py train --data data/emails.csv
+```
+
+Evaluate models on held-out test set (prints metrics, saves ROC & confusion matrices):
+Argument determines how the trained model names are prefixed
+```
+python main.py evaluate --prefix spam
+```
+
+If data isn't specified, the default `data/emails.csv` will be used.
+If prefix isn't specified, the default `spam` will be used.
+
+### Implemented Machine Learning Methods
+Classification models:
+1. Logistic Regression (baseline linear classifier with TF-IDF sparse features)
+2. Multinomial Naive Bayes (probabilistic model well-suited to word counts)
+3. Linear SVM (margin-based, robust with high-dimensional sparse data)
+4. Random Forest (ensemble of decision trees for non-linear relationships)
+
+Unsupervised (Exploratory) model:
+- KMeans (after PCA dimensionality reduction) to inspect natural grouping of emails.
+
+This satisfies the requirement of using at least two machine learning methods (multiple classification + one clustering for extra experimentation and potential HD credit).
+
+### Evaluation Metrics
+For classification we compute: Accuracy, Precision, Recall, F1 Score, ROC AUC (when probabilistic scores available), and Confusion Matrix.
+For clustering we compute: Silhouette Score (interpretive only; clustering labels are not aligned with spam/ham classes without post-hoc mapping).
+
+### Artifacts Saved
+| Artifact | Path | Description |
+|----------|------|-------------|
+| Vectorizer | `artifacts/spam_vectorizer.joblib` | Fitted TF-IDF vocabulary + IDF weights |
+| Train Split | `artifacts/spam_train.joblib` | (X_train sparse matrix, y_train) |
+| Test Split | `artifacts/spam_test.joblib` | (X_test sparse matrix, y_test) |
+| Models | `models/*.joblib` | Trained classifier / clustering models |
+| Figures | `reports/data_figures/*.png` `reports/evaluation_figures/*.png` | EDA and evaluation plots |
+
+### Dependencies
+Key Python libraries used:
+- pandas
+- numpy
+- scikit-learn
+- matplotlib
+- seaborn (optional for enhanced styling; currently not used directly but available)
+- nltk (reserved for possible future token normalization / stopword refinement)
+- joblib (persistence of models & artifacts)
+- tqdm (optional progress bars)
+
+### Justification of Model Choices
+- Logistic Regression & Linear SVM: Strong baselines for linearly separable high-dimensional sparse text features.
+- Multinomial Naive Bayes: Often excels with word frequency data and provides probabilistic outputs for ROC.
+- Random Forest: Introduces non-linear decision boundaries and feature interaction modeling.
+- KMeans + PCA: Offers unsupervised perspective; helps verify whether spam vs ham separation emerges naturally.
+
+### Reproducibility
+Fixed random_state=42 for model reproducibility where applicable. Train/test split stratified to preserve class distribution.
+
+### License / Use
+Academic assignment use only.
