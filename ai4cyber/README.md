@@ -70,8 +70,6 @@ Classification models:
 Unsupervised (Exploratory) model:
 - KMeans (after PCA dimensionality reduction) to inspect natural grouping of emails.
 
-This satisfies the requirement of using at least two machine learning methods (multiple classification + one clustering for extra experimentation and potential HD credit).
-
 ### Evaluation Metrics
 For classification we compute: Accuracy, Precision, Recall, F1 Score, ROC AUC (when probabilistic scores available), and Confusion Matrix.
 For clustering we compute: Silhouette Score (interpretive only; clustering labels are not aligned with spam/ham classes without post-hoc mapping).
@@ -91,10 +89,7 @@ Key Python libraries used:
 - numpy
 - scikit-learn
 - matplotlib
-- seaborn (optional for enhanced styling; currently not used directly but available)
-- nltk (reserved for possible future token normalization / stopword refinement)
 - joblib (persistence of models & artifacts)
-- tqdm (optional progress bars)
 
 ### Justification of Model Choices
 - Logistic Regression & Linear SVM: Strong baselines for linearly separable high-dimensional sparse text features.
