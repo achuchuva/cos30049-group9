@@ -13,4 +13,5 @@ dependencies = [
 	"nltk",
 	"joblib",
 	"tqdm",
+	"datasets>=4.1.1",
 ]

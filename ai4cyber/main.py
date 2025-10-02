@@ -32,6 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval = sub.add_parser("evaluate", help="Evaluate models on test set")
     p_eval.add_argument("--prefix", default="spam")
 
+    p_all = sub.add_parser("all", help="Run the full pipeline: preprocess, eda, train, evaluate")
+    p_all.add_argument("--data", default="data/emails.csv")
+
     return parser
 
 
@@ -46,6 +49,12 @@ def main(argv=None):
         train_module.train(args.data)
     elif args.command == "evaluate":
         eval_module.evaluate(prefix=args.prefix)
+    # option for running the pipeline end-to-end
+    elif args.command == "all":
+        dp.preprocess_data(args.data)
+        eda.run_eda(args.data)
+        train_module.train(args.data)
+        eval_module.evaluate(prefix="spam")
     else:
         parser.print_help()
 

@@ -25,15 +25,16 @@ def get_classification_models() -> Dict[str, Any]:
     to mitigate overfitting.
     """
     return {
-        "logreg": LogisticRegression(max_iter=200, C=0.1, random_state=42),
-        "nb": MultinomialNB(alpha=2.0),
+        "logreg": LogisticRegression(max_iter=200, C=1.0, class_weight="balanced", random_state=42),
+        "nb": MultinomialNB(alpha=0.5, fit_prior=False),
         "svm": LinearSVC(C=0.1, dual=True, random_state=42),
         "rf": RandomForestClassifier(
             n_estimators=100,
             random_state=42,
             n_jobs=-1,
-            max_depth=20,
-            min_samples_leaf=5,
+            max_depth=30,
+            min_samples_leaf=2,
+            class_weight='balanced'
         ),
     }
 

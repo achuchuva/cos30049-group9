@@ -81,6 +81,8 @@ def preprocess(
     random_state: int = DEFAULT_RANDOM_STATE,
     max_features: int = 5000,
     ngram_range: Tuple[int, int] = (1, 2),
+    min_df: int = 2,
+    max_df: float = 0.95,
 ) -> ProcessedData:
     """
     Preprocess the dataset: split into train/test, vectorize text.
@@ -90,6 +92,8 @@ def preprocess(
         random_state: random seed for reproducibility
         max_features: maximum number of features for TF-IDF
         ngram_range: n-gram range for TF-IDF
+        min_df: minimum document frequency for terms
+        max_df: maximum document frequency for terms (proportion)
     Returns:
         ProcessedData dataclass with train/test splits and vectorizer
     """
@@ -105,6 +109,8 @@ def preprocess(
         ngram_range=ngram_range,
         stop_words="english",
         sublinear_tf=True,
+        min_df=min_df,
+        max_df=max_df,
     )
     X_train = vectorizer.fit_transform(X_train_text)
     X_test = vectorizer.transform(X_test_text)
@@ -138,7 +144,7 @@ def load_artifacts(prefix: str = "spam") -> ProcessedData:
     X_test, y_test = joblib.load(ARTIFACTS_DIR / f"{prefix}_test.joblib")
     return ProcessedData(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test, vectorizer=vectorizer)
 
-def preprocess_data(csv_path: str = "data/emails.csv"):
+def preprocess_data(csv_path: str = "data/combined_spam_data.csv"):
     df = load_spam_dataset(csv_path)
     processed = preprocess(df)
     save_artifacts(processed)

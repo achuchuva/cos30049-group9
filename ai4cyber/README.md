@@ -57,6 +57,11 @@ Argument determines how the trained model names are prefixed
 python main.py evaluate --prefix spam
 ```
 
+Run the full pipeline: preprocess, eda, train, evaluate
+```
+python main.py all --data data/emails.csv
+```
+
 If data isn't specified, the default `data/emails.csv` will be used.
 If prefix isn't specified, the default `spam` will be used.
 
