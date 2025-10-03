@@ -16,7 +16,7 @@ The Machine Learning Web Application aims to deliver an interactive platform for
 ### Repository Structure
 ```
 ai4cyber/
-  data/                     # Folder containing raw datasets
+  data/                     # Folder containing raw and processed/cleaned datasets
   data/emails.csv           # Provided raw dataset (text, spam)
   data_processing.py        # Loading, cleaning, TF-IDF feature generation
   eda.py                    # Generates figures for exploratory analysis

@@ -144,7 +144,7 @@ def load_artifacts(prefix: str = "spam") -> ProcessedData:
     X_test, y_test = joblib.load(ARTIFACTS_DIR / f"{prefix}_test.joblib")
     return ProcessedData(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test, vectorizer=vectorizer)
 
-def preprocess_data(csv_path: str = "data/combined_spam_data.csv"):
+def preprocess_data(csv_path: str = "data/spam.csv"):
     df = load_spam_dataset(csv_path)
     processed = preprocess(df)
     save_artifacts(processed)
