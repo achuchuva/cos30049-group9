@@ -7,7 +7,6 @@ from typing import Dict, Any
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -27,7 +26,6 @@ def get_classification_models() -> Dict[str, Any]:
     return {
         "logreg": LogisticRegression(max_iter=200, C=1.0, class_weight="balanced", random_state=42),
         "nb": MultinomialNB(alpha=0.5, fit_prior=False),
-        "svm": LinearSVC(C=0.1, dual=True, random_state=42),
         "rf": RandomForestClassifier(
             n_estimators=100,
             random_state=42,

@@ -4,7 +4,7 @@ Saves trained classification & clustering models into models/ directory.
 from __future__ import annotations
 from pathlib import Path
 import joblib
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score
 
 from data_processing import load_spam_dataset, preprocess, save_artifacts
 from models import get_classification_models, get_clustering_model
@@ -28,7 +28,7 @@ def train(csv_path: str = "data/emails.csv"):
         preds = model.predict(X_train)
         metrics_report[name] = {
             "train_accuracy": float(accuracy_score(y_train, preds)),
-            "train_f1": float(f1_score(y_train, preds)),
+            "precision": float(precision_score(y_train, preds, zero_division=0)),
         }
 
     # clustering (unsupervised) just to explore separation

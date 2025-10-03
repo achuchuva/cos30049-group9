@@ -46,7 +46,7 @@ Run EDA (generates plots under `reports/data_figures`):
 python main.py eda --data data/emails.csv
 ```
 
-Train models (Logistic Regression, Naive Bayes, Linear SVM, Random Forest + KMeans clustering):
+Train models (Logistic Regression, Naive Bayes, Random Forest, KMeans clustering):
 ```
 python main.py train --data data/emails.csv
 ```
@@ -69,8 +69,7 @@ If prefix isn't specified, the default `spam` will be used.
 Classification models:
 1. Logistic Regression (baseline linear classifier with TF-IDF sparse features)
 2. Multinomial Naive Bayes (probabilistic model well-suited to word counts)
-3. Linear SVM (margin-based, robust with high-dimensional sparse data)
-4. Random Forest (ensemble of decision trees for non-linear relationships)
+3. Random Forest (ensemble of decision trees for non-linear relationships)
 
 Unsupervised (Exploratory) model:
 - KMeans (after PCA dimensionality reduction) to inspect natural grouping of emails.
@@ -97,7 +96,7 @@ Key Python libraries used:
 - joblib (persistence of models & artifacts)
 
 ### Justification of Model Choices
-- Logistic Regression & Linear SVM: Strong baselines for linearly separable high-dimensional sparse text features.
+- Logistic Regression: Strong baseline for linearly separable high-dimensional sparse text features.
 - Multinomial Naive Bayes: Often excels with word frequency data and provides probabilistic outputs for ROC.
 - Random Forest: Introduces non-linear decision boundaries and feature interaction modeling.
 - KMeans + PCA: Offers unsupervised perspective; helps verify whether spam vs ham separation emerges naturally.

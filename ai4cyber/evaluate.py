@@ -6,10 +6,10 @@ from pathlib import Path
 import joblib
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
+    r2_score,
     accuracy_score,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
     roc_curve,
     confusion_matrix,
@@ -31,7 +31,7 @@ def evaluate_model(y_test, y_pred, model_name):
     print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
     print(f"Precision: {precision_score(y_test, y_pred):.2f}")
     print(f"Recall: {recall_score(y_test, y_pred):.2f}")
-    print(f"F1-Score: {f1_score(y_test, y_pred):.2f}")
+    print(f"R2 Score: {r2_score(y_test, y_pred):.2f}")
     print("\nConfusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
     print("\nClassification Report:")
@@ -89,18 +89,48 @@ def evaluate(prefix: str = "spam"):
             "accuracy": float(accuracy_score(y_test, preds)),
             "precision": float(precision_score(y_test, preds, zero_division=0)),
             "recall": float(recall_score(y_test, preds, zero_division=0)),
-            "f1": float(f1_score(y_test, preds, zero_division=0)),
+            "r2_score": float(r2_score(y_test, preds)),
             "roc_auc": float(roc_auc) if roc_auc is not None else None,
         }
 
-    # clustering evaluation (silhouette on train just for separation) optional
+    # clustering evaluation
     cluster_path = MODELS_DIR / "kmeans_pca.joblib"
     if cluster_path.exists():
         cluster_model = joblib.load(cluster_path)
+        
+        # Ensure X_test is a dense array for PCA transformation and plotting
+        X_test_dense = processed.X_test.toarray() if hasattr(processed.X_test, "toarray") else processed.X_test
+
+        # Get cluster labels
+        labels = cluster_model.predict(X_test_dense)
+
+        # Project data to 2D using the PCA from the pipeline for visualization
+        pca_transformer = cluster_model.named_steps['pca']
+        X_test_pca = pca_transformer.transform(X_test_dense)
+
+        # Plot 1: Clusters
+        plt.figure(figsize=(8, 6))
+        scatter = plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=labels, cmap='viridis', alpha=0.7)
+        plt.legend(handles=scatter.legend_elements()[0], labels=set(labels), title="Clusters")
+        plt.title('KMeans Cluster Separation (PCA)')
+        plt.xlabel('Principal Component 1')
+        plt.ylabel('Principal Component 2')
+        plt.savefig(FIG_DIR / "kmeans_cluster_separation.png", dpi=150)
+        plt.close()
+
+        # Plot 2: True Labels
+        plt.figure(figsize=(8, 6))
+        scatter_true = plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test, cmap='coolwarm', alpha=0.7)
+        plt.legend(handles=scatter_true.legend_elements()[0], labels=['Not Spam', 'Spam'], title="True Labels")
+        plt.title('True Label Distribution (PCA)')
+        plt.xlabel('Principal Component 1')
+        plt.ylabel('Principal Component 2')
+        plt.savefig(FIG_DIR / "kmeans_true_labels.png", dpi=150)
+        plt.close()
+
         # silhouette requires at least 2 labels present
-        labels = cluster_model.predict(processed.X_test)
         if len(set(labels)) > 1:
-            sil = silhouette_score(processed.X_test, labels)
+            sil = silhouette_score(X_test_dense, labels)
             results["kmeans_pca"] = {"silhouette": float(sil)}
             print(f"\nKMeans PCA Silhouette Score: {sil:.3f}")
 
