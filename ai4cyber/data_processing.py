@@ -26,6 +26,16 @@ NUMERICAL_COLS = [
     "url_digit_count",
 ]
 
+SUSPICIOUS_WORDS = [
+    'free', 'win', 'winner', 'cash', 'prize', 'urgent', 'apply now', 'buy',
+    'subscribe', 'click', 'limited time', 'offer', 'money', 'credit', 'loan',
+    'investment', 'pharmacy', 'viagra', 'sex', 'hot', 'deal', 'now',
+    'guaranteed', 'congratulations', 'won', 'claim', 'unlimited', 'certified',
+    'extra', 'income', 'earn', 'per', 'week', 'work', 'from', 'home', 'opportunity',
+    'exclusive', 'amazing', 'selected', 'special', 'promotion', 'bonus',
+    'not', 'spam', 'unsubscribe', 'opt-out', 'dear', 'friend', '$'
+]
+
 _punct_trans = str.maketrans("", "", string.punctuation)
 
 
@@ -77,6 +87,17 @@ def load_spam_dataset(csv_path: str | Path) -> pd.DataFrame:
     # clean text
     df[TEXT_COL] = df[TEXT_COL].astype(str).apply(clean_text)
     return df
+
+
+def extract_numerical_features(text: str) -> dict:
+    """Extract numerical features from a single text string."""
+    return {
+        "char_count": len(text),
+        "word_count": len(text.split()),
+        "suspicious_word_count": sum(1 for word in SUSPICIOUS_WORDS if word in text.lower()),
+        "url_count": len(re.findall(r"http[s]?://", text)),
+        "url_digit_count": sum(c.isdigit() for c in re.findall(r"http[s]?://\S+", text)),
+    }
 
 
 @dataclass

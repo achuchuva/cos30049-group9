@@ -24,6 +24,7 @@ ai4cyber/
   models.py                   # Model factory functions
   train.py                    # Trains and saves models & artifacts
   evaluate.py                 # Evaluates saved models on test set
+  predict.py                  # Predicts on a single .txt file input
   main.py                     # CLI orchestrator (eda, train, evaluate)
   models/                     # Persisted trained models (.joblib)
   artifacts/                  # Vectorizer & dataset splits (.joblib)
@@ -58,6 +59,11 @@ Evaluate models on held-out test set (prints metrics, saves ROC & confusion matr
 Argument determines how the trained model names are prefixed
 ```
 python main.py evaluate --prefix spam
+```
+
+Predict on a single text file:
+```
+python predict.py sample_input.txt
 ```
 
 Run the full pipeline: preprocess, eda, train, evaluate

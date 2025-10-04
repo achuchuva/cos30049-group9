@@ -12,18 +12,7 @@ import seaborn as sns
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
 
-from data_processing import load_spam_dataset, TEXT_COL, TARGET_COL, NUMERICAL_COLS
-
-# List of suspicious words often found in spam
-SUSPICIOUS_WORDS = [
-    'free', 'win', 'winner', 'cash', 'prize', 'urgent', 'apply now', 'buy',
-    'subscribe', 'click', 'limited time', 'offer', 'money', 'credit', 'loan',
-    'investment', 'pharmacy', 'viagra', 'sex', 'hot', 'deal', 'now',
-    'guaranteed', 'congratulations', 'won', 'claim', 'unlimited', 'certified',
-    'extra', 'income', 'earn', 'per', 'week', 'work', 'from', 'home', 'opportunity',
-    'exclusive', 'amazing', 'selected', 'special', 'promotion', 'bonus',
-    'not', 'spam', 'unsubscribe', 'opt-out', 'dear', 'friend', '$'
-]
+from data_processing import load_spam_dataset, TEXT_COL, TARGET_COL, NUMERICAL_COLS, SUSPICIOUS_WORDS
 
 FIG_DIR = Path("reports/data_figures")
 FIG_DIR.mkdir(parents=True, exist_ok=True)

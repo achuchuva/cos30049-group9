@@ -1,8 +1,8 @@
 """Command line interface for the spam detection pipeline.
 
 Usage examples:
-  python -m main eda --data data/emails.csv
-  python -m main train --data data/emails.csv
+  python -m main eda --data data/spam_featured.csv
+  python -m main train --data data/spam_featured.csv
   python -m main evaluate
 """
 from __future__ import annotations
@@ -22,19 +22,19 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_preprocess = sub.add_parser("preprocess", help="Preprocess data and save artifacts")
-    p_preprocess.add_argument("--data", default="data/emails.csv")
+    p_preprocess.add_argument("--data", default="data/spam_featured.csv")
 
     p_eda = sub.add_parser("eda", help="Run exploratory data analysis")
-    p_eda.add_argument("--data", default="data/emails.csv")
+    p_eda.add_argument("--data", default="data/spam_featured.csv")
 
     p_train = sub.add_parser("train", help="Train models")
-    p_train.add_argument("--data", default="data/emails.csv")
+    p_train.add_argument("--data", default="data/spam_featured.csv")
 
     p_eval = sub.add_parser("evaluate", help="Evaluate models on test set")
     p_eval.add_argument("--prefix", default="spam")
 
     p_all = sub.add_parser("all", help="Run the full pipeline: preprocess, eda, train, evaluate")
-    p_all.add_argument("--data", default="data/emails.csv")
+    p_all.add_argument("--data", default="data/spam_featured.csv")
 
     return parser
 
