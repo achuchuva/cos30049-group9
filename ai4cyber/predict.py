@@ -86,15 +86,13 @@ def main():
 
     # Make and Display Predictions
     print(f"Analyzing text from: '{args.file_path}'\n")
-    print("--- Text Content ---")
     print(text_to_predict)
     print("--------------------\n")
-    print("--- Predictions ---")
+    print("Predictions:")
     
     for name, model in models.items():
         label, prob = predict(text_to_predict, vectorizer, scaler, model)
         print(f"- {name}: {label.upper()} (Confidence: {prob:.2%})")
-    print("-------------------\n")
 
 
 if __name__ == "__main__":
