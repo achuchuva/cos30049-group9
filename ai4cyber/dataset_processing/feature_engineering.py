@@ -1,17 +1,7 @@
 import pandas as pd
 import re
 from urllib.parse import urlparse
-
-# List of suspicious words often found in spam
-SUSPICIOUS_WORDS = [
-    'free', 'win', 'winner', 'cash', 'prize', 'urgent', 'apply now', 'buy',
-    'subscribe', 'click', 'limited time', 'offer', 'money', 'credit', 'loan',
-    'investment', 'pharmacy', 'viagra', 'sex', 'hot', 'deal', 'now',
-    'guaranteed', 'congratulations', 'won', 'claim', 'unlimited', 'certified',
-    'extra', 'income', 'earn', 'per', 'week', 'work', 'from', 'home', 'opportunity',
-    'exclusive', 'amazing', 'selected', 'special', 'promotion', 'bonus',
-    'not', 'spam', 'unsubscribe', 'opt-out', 'dear', 'friend', '$'
-]
+from data_processing import SUSPICIOUS_WORDS
 
 def count_suspicious_words(text):
     """Counts the number of suspicious words in a text."""

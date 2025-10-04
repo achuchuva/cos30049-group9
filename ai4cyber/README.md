@@ -24,6 +24,7 @@ ai4cyber/
   models.py                   # Model factory functions
   train.py                    # Trains and saves models & artifacts
   evaluate.py                 # Evaluates saved models on test set
+  predict.py                  # Predicts on a single .txt file input
   main.py                     # CLI orchestrator (eda, train, evaluate)
   models/                     # Persisted trained models (.joblib)
   artifacts/                  # Vectorizer & dataset splits (.joblib)
@@ -60,6 +61,11 @@ Argument determines how the trained model names are prefixed
 python main.py evaluate --prefix spam
 ```
 
+Predict on a single text file:
+```
+python predict.py sample_input.txt
+```
+
 Run the full pipeline: preprocess, eda, train, evaluate
 ```
 python main.py all --data data/spam_featured.csv
@@ -78,8 +84,8 @@ Clustering model:
 - KMeans (after PCA dimensionality reduction).
 
 ### Evaluation Metrics
-For classification we compute: Accuracy, Precision, Recall, R2 Score, ROC AUC (when probabilistic scores available), and Confusion Matrix.
-For clustering we compute: Silhouette Score, and Scatter Plots for model predictions and true labels.
+For classification models, the following is computed: Accuracy, Precision, Recall, R2 Score, ROC AUC (when probabilistic scores available), and Confusion Matrix.
+For clustering, the following is computed: Silhouette Score, and Scatter Plots for model predictions and true labels.
 
 ### Artifacts Saved
 | Artifact | Path | Description |
@@ -95,8 +101,13 @@ Key Python libraries used:
 - pandas
 - numpy
 - scikit-learn
+- scipy
 - matplotlib
+- seaborn
+- datasets (get datasets from HuggingFace)
 - joblib (persistence of models & artifacts)
+- wordcloud
+- urllib
 
 ### Reproducibility
 Fixed random_state=42 for model reproducibility where applicable. Train/test split stratified to preserve class distribution.
