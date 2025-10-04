@@ -31,8 +31,7 @@ _punct_trans = str.maketrans("", "", string.punctuation)
 
 def clean_text(text: str) -> str:
     """
-    Clean text: lowercase, remove punctuation, and extra whitespace.
-    URLs and digits are kept for feature extraction.
+    Clean text: lowercase, subject: email headers, remove punctuation, and extra whitespace.
     Args:
         text: raw text string
     Returns:
@@ -82,6 +81,7 @@ def load_spam_dataset(csv_path: str | Path) -> pd.DataFrame:
 
 @dataclass
 class ProcessedData:
+    """Dataclass to hold processed data and artifacts."""
     X_train: any
     X_test: any
     y_train: pd.Series

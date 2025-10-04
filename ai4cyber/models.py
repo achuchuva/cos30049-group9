@@ -20,8 +20,8 @@ class ModelBundle:
 
 
 def get_classification_models() -> Dict[str, Any]:
-    """Returns a dictionary of classification models with regularization parameters
-    to mitigate overfitting.
+    """Returns a dictionary of classification models.
+    Regularization parameters applied to help mitigate overfitting.
     """
     return {
         "logreg": LogisticRegression(max_iter=200, C=1.0, class_weight="balanced", random_state=42),

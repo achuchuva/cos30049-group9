@@ -14,21 +14,25 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 
 def train(csv_path: str = "data/emails.csv"):
+    # Load and preprocess data
     df = load_spam_dataset(csv_path)
     processed = preprocess(df)
     save_artifacts(processed)
 
+    # Get training data
     X_train, y_train = processed.X_train, processed.y_train
     class_models = get_classification_models()
 
     metrics_report = {}
     for name, model in class_models.items():
+        # Train and save each classification model using joblib
         model.fit(X_train, y_train)
         joblib.dump(model, MODELS_DIR / f"{name}.joblib")
         preds = model.predict(X_train)
+        # Record metrics
         metrics_report[name] = {
             "train_accuracy": float(accuracy_score(y_train, preds)),
-            "precision": float(precision_score(y_train, preds, zero_division=0)),
+            "train_precision": float(precision_score(y_train, preds, zero_division=0)),
         }
 
     # clustering (unsupervised) just to explore separation

@@ -17,6 +17,7 @@ import evaluate as eval_module
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Command line argument parser that helps run different parts of the pipeline."""
     parser = argparse.ArgumentParser(description="Spam detection pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -41,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    # Dispatch to the relevant function based on the command
     if args.command == "preprocess":
         dp.preprocess_data(args.data)
     elif args.command == "eda":
@@ -49,7 +51,6 @@ def main(argv=None):
         train_module.train(args.data)
     elif args.command == "evaluate":
         eval_module.evaluate(prefix=args.prefix)
-    # option for running the pipeline end-to-end
     elif args.command == "all":
         dp.preprocess_data(args.data)
         eda.run_eda(args.data)

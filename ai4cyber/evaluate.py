@@ -25,7 +25,7 @@ FIG_DIR = Path("reports/evaluation_figures")
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR = Path("models")
 
-# Function for evaluation
+# Function for evaluation (includes printing accuracy, precision, recall, R2 score, confusion matrix, and classification report)
 def evaluate_model(y_test, y_pred, model_name):
     print(f"{model_name} Evaluation:")
     print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
@@ -43,7 +43,6 @@ def evaluate(prefix: str = "spam"):
     X_test, y_test = processed.X_test, processed.y_test
 
     # iterate through expected model filenames
-    results = {}
     for name in get_classification_models().keys():
         path = MODELS_DIR / f"{name}.joblib"
         if not path.exists():
@@ -54,13 +53,16 @@ def evaluate(prefix: str = "spam"):
         # Use the new evaluation function to print detailed metrics
         evaluate_model(y_test, preds, name)
 
+        # ROC AUC for probabilistic models (if applicable)
         probas = None
         if hasattr(model, "predict_proba"):
             try:
                 probas = model.predict_proba(X_test)[:, 1]
             except Exception:
                 probas = None
-        
+
+        # Compute Receiver Operating Characteristic (ROC) curve and AUC
+        # ROC shows the trade-off between TPR and FPR at various threshold settings
         roc_auc = None
         if probas is not None:
             roc_auc = roc_auc_score(y_test, probas)
@@ -76,6 +78,7 @@ def evaluate(prefix: str = "spam"):
             plt.savefig(FIG_DIR / f"roc_{name}.png", dpi=150)
             plt.close()
 
+        # Confusion Matrix
         cm = confusion_matrix(y_test, preds)
         disp = ConfusionMatrixDisplay(cm)
         disp.plot(cmap="Blues")
@@ -83,15 +86,6 @@ def evaluate(prefix: str = "spam"):
         plt.tight_layout()
         plt.savefig(FIG_DIR / f"cm_{name}.png", dpi=150)
         plt.close()
-
-        # Store a summary of results (optional, as details are printed)
-        results[name] = {
-            "accuracy": float(accuracy_score(y_test, preds)),
-            "precision": float(precision_score(y_test, preds, zero_division=0)),
-            "recall": float(recall_score(y_test, preds, zero_division=0)),
-            "r2_score": float(r2_score(y_test, preds)),
-            "roc_auc": float(roc_auc) if roc_auc is not None else None,
-        }
 
     # clustering evaluation
     cluster_path = MODELS_DIR / "kmeans_pca.joblib"
@@ -108,7 +102,7 @@ def evaluate(prefix: str = "spam"):
         pca_transformer = cluster_model.named_steps['pca']
         X_test_pca = pca_transformer.transform(X_test_dense)
 
-        # Plot 1: Clusters
+        # Predicted Clusters
         plt.figure(figsize=(8, 6))
         scatter = plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=labels, cmap='viridis', alpha=0.7)
         plt.legend(handles=scatter.legend_elements()[0], labels=set(labels), title="Clusters")
@@ -118,7 +112,7 @@ def evaluate(prefix: str = "spam"):
         plt.savefig(FIG_DIR / "kmeans_cluster_separation.png", dpi=150)
         plt.close()
 
-        # Plot 2: True Labels
+        # Cluster of True Labels
         plt.figure(figsize=(8, 6))
         scatter_true = plt.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test, cmap='coolwarm', alpha=0.7)
         plt.legend(handles=scatter_true.legend_elements()[0], labels=['Not Spam', 'Spam'], title="True Labels")
@@ -131,10 +125,7 @@ def evaluate(prefix: str = "spam"):
         # silhouette requires at least 2 labels present
         if len(set(labels)) > 1:
             sil = silhouette_score(X_test_dense, labels)
-            results["kmeans_pca"] = {"silhouette": float(sil)}
             print(f"\nKMeans PCA Silhouette Score: {sil:.3f}")
-
-    return results
 
 
 if __name__ == "__main__":

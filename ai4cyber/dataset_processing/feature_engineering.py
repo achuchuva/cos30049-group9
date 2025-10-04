@@ -26,7 +26,7 @@ def count_urls(text):
     """Counts the number of URLs in a text."""
     if not isinstance(text, str):
         return 0
-    # A simple regex to find URLs
+    # Simple regex to find URLs
     urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
     return len(urls)
 
@@ -54,37 +54,25 @@ def feature_engineering(input_path='data/spam.csv', output_path='data/spam_featu
     except FileNotFoundError:
         print(f"Error: The file {input_path} was not found.")
         return
-
-    # Ensure the 'text' column exists
-    if 'v2' in df.columns and 'v1' in df.columns:
-        df = df.rename(columns={'v2': 'text', 'v1': 'label'})
-        df = df[['text', 'label']]
-    elif 'text' not in df.columns:
-        print("Error: The CSV must have a 'text' column.")
-        return
     
-    # 1. Number of characters
+    # Number of characters
     df['char_count'] = df['text'].str.len().fillna(0)
 
-    # 2. Number of words (length)
+    # Number of words (length)
     df['word_count'] = df['text'].apply(lambda x: len(str(x).split()) if pd.notna(x) else 0)
 
-    # 3. Number of suspicious words
+    # Number of suspicious words
     df['suspicious_word_count'] = df['text'].apply(count_suspicious_words)
 
-    # 4. Number of URLs
+    # Number of URLs
     df['url_count'] = df['text'].apply(count_urls)
 
-    # 5. Number of digits in URLs
+    # Number of digits in URLs
     df['url_digit_count'] = df['text'].apply(count_digits_in_urls)
 
-    print("Feature engineering complete.")
     print(df.head())
 
-    # Save the new dataframe
-    print(f"Saving featured data to {output_path}...")
     df.to_csv(output_path, index=False)
-    print("Done.")
 
 if __name__ == '__main__':
     feature_engineering()
