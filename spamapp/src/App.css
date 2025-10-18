@@ -14,14 +14,93 @@
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-color: #20232a;
+  padding: 1.5rem 1rem;
+  color: #fff;
+  text-align: center;
+}
+
+.App-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  background: #ffffff;
+  color: #222;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.08);
+  text-align: left;
+}
+
+.predict-form textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: .95rem;
+  padding: .5rem;
+  resize: vertical;
+}
+
+.actions {
+  margin-top: .5rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+button {
+  background: #007bff;
+  border: none;
+  color: #fff;
+  padding: .5rem .9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: .85rem;
+}
+
+button:disabled {
+  background: #8895a7;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  background: #0062cc;
+}
+
+.result, .batch-results li {
+  margin-top: .5rem;
+  padding: .5rem .6rem;
+  border-radius: 4px;
+  font-size: .85rem;
+}
+
+.result.spam, .batch-results li.spam {
+  background: #ffe5e5;
+  border: 1px solid #ff9b9b;
+}
+
+.result.ham, .batch-results li.ham {
+  background: #e5f7e5;
+  border: 1px solid #92d992;
+}
+
+.batch-results ul {
+  list-style: none;
+  padding: 0;
+  margin: .5rem 0 0;
+}
+
+.error {
+  margin-top: .5rem;
+  color: #d8000c;
+  background: #ffd2d2;
+  padding: .4rem .6rem;
+  border-radius: 4px;
+  font-size: .8rem;
 }
 
 .App-link {

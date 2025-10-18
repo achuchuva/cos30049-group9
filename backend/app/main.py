@@ -15,8 +15,7 @@ from .models import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     HealthResponse,
-    ModelInfo,
-    ErrorResponse
+    ModelInfo
 )
 from .predictor import SpamPredictor
 from .config import settings

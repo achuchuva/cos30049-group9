@@ -174,10 +174,13 @@ class SpamPredictor:
         Returns:
             Dictionary with formatted prediction results
         """
+        # Ensure prediction is native Python int (sklearn may return numpy scalar)
+        prediction = int(prediction)
         label = "spam" if prediction == 1 else "ham"
-        is_spam = prediction == 1
+        # Cast to native bool to avoid pydantic serialization issues with numpy.bool_
+        is_spam = bool(prediction == 1)
         
-        # Get probabilities
+        # Convert probabilities (may be numpy.float_) to native float
         ham_prob = float(probabilities[0])
         spam_prob = float(probabilities[1])
         confidence = spam_prob if is_spam else ham_prob
@@ -217,12 +220,8 @@ class SpamPredictor:
             # Predict
             prediction = self.model.predict(features)[0]
             
-            # Get probabilities if available
-            if hasattr(self.model, "predict_proba"):
-                probabilities = self.model.predict_proba(features)[0]
-            else:
-                # Fallback if model doesn't support probabilities
-                probabilities = [1.0 - prediction, prediction]
+            # Get probabilities
+            probabilities = self.model.predict_proba(features)[0]
             
             # Postprocess
             result = self.postprocess(prediction, probabilities)
