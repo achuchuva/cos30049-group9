@@ -2,7 +2,7 @@
 Pydantic models for request/response validation.
 """
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 
@@ -23,6 +23,15 @@ class PredictionRequest(BaseModel):
         return v
 
 
+class TextFeatures(BaseModel):
+    """Text feature extraction results."""
+    char_count: int = Field(..., description="Number of characters in text")
+    word_count: int = Field(..., description="Number of words in text")
+    suspicious_word_count: int = Field(..., description="Number of suspicious/spam words")
+    url_count: int = Field(..., description="Number of URLs in text")
+    url_digit_count: int = Field(..., description="Number of digits in URLs")
+
+
 class PredictionResponse(BaseModel):
     """Response model for single prediction."""
     text: str = Field(..., description="Input text (truncated if too long)")
@@ -31,8 +40,10 @@ class PredictionResponse(BaseModel):
     is_spam: bool = Field(..., description="Boolean flag indicating if text is spam")
     spam_probability: float = Field(..., description="Probability of text being spam", ge=0.0, le=1.0)
     ham_probability: float = Field(..., description="Probability of text being ham", ge=0.0, le=1.0)
+    features: TextFeatures = Field(..., description="Extracted text features")
     timestamp: str = Field(..., description="Timestamp of prediction")
     model_name: str = Field(..., description="Name of the model used")
+    prediction_id: Optional[int] = Field(None, description="Database ID of saved prediction")
     
     class Config:
         json_schema_extra = {
@@ -43,63 +54,16 @@ class PredictionResponse(BaseModel):
                 "is_spam": True,
                 "spam_probability": 0.95,
                 "ham_probability": 0.05,
+                "features": {
+                    "char_count": 150,
+                    "word_count": 25,
+                    "suspicious_word_count": 3,
+                    "url_count": 1,
+                    "url_digit_count": 5
+                },
                 "timestamp": "2025-10-16T10:30:00.000000",
-                "model_name": "Logistic Regression"
-            }
-        }
-
-
-class BatchPredictionRequest(BaseModel):
-    """Request model for batch predictions."""
-    texts: List[str] = Field(
-        ...,
-        description="List of texts to classify",
-        min_items=1,
-        max_items=100,
-        example=[
-            "Hello, how are you?",
-            "WIN FREE CASH NOW!!!",
-            "Meeting scheduled for 3pm tomorrow"
-        ]
-    )
-
-
-class SingleBatchPrediction(BaseModel):
-    """Single prediction within a batch response."""
-    text: str
-    prediction: str
-    confidence: float
-    is_spam: bool
-    spam_probability: float
-    ham_probability: float
-    timestamp: str
-    model_name: str
-    error: Optional[str] = None
-
-
-class BatchPredictionResponse(BaseModel):
-    """Response model for batch predictions."""
-    predictions: List[dict] = Field(..., description="List of predictions")
-    total: int = Field(..., description="Total number of predictions")
-    timestamp: str = Field(..., description="Timestamp of batch prediction")
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "predictions": [
-                    {
-                        "text": "Hello, how are you?",
-                        "prediction": "ham",
-                        "confidence": 0.92,
-                        "is_spam": False,
-                        "spam_probability": 0.08,
-                        "ham_probability": 0.92,
-                        "timestamp": "2025-10-16T10:30:00.000000",
-                        "model_name": "Logistic Regression"
-                    }
-                ],
-                "total": 1,
-                "timestamp": "2025-10-16T10:30:00.000000"
+                "model_name": "Logistic Regression",
+                "prediction_id": 123
             }
         }
 
@@ -158,3 +122,33 @@ class ErrorResponse(BaseModel):
                 "timestamp": "2025-10-16T10:30:00.000000"
             }
         }
+
+
+class FileUploadResponse(BaseModel):
+    """Response model for file upload predictions."""
+    filename: str = Field(..., description="Name of uploaded file")
+    file_size_bytes: int = Field(..., description="Size of file in bytes")
+    extracted_text_length: int = Field(..., description="Length of extracted text")
+    prediction_result: PredictionResponse = Field(..., description="Prediction result")
+
+
+class HistoryResponse(BaseModel):
+    """Response model for prediction history."""
+    predictions: List[Dict[str, Any]] = Field(..., description="List of predictions")
+    total: int = Field(..., description="Total count of predictions")
+    limit: int = Field(..., description="Limit used in query")
+    offset: int = Field(..., description="Offset used in query")
+
+
+class StatsResponse(BaseModel):
+    """Response model for statistics."""
+    total_predictions: int
+    spam_count: int
+    ham_count: int
+    spam_rate: float
+    avg_confidence: float
+    feature_averages: Dict[str, float]
+    time_series: List[Dict[str, Any]]
+    confidence_distribution: List[Dict[str, Any]]
+    feature_distribution: List[Dict[str, Any]]
+
