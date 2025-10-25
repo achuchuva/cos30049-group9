@@ -2,23 +2,35 @@
 FastAPI Backend for Spam Detection AI Model
 Provides RESTful API endpoints for spam classification with comprehensive error handling.
 """
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
 import logging
 from datetime import datetime
+import csv
+import io
+import json
 
 from .models import (
     PredictionRequest,
     PredictionResponse,
-    BatchPredictionRequest,
-    BatchPredictionResponse,
     HealthResponse,
-    ModelInfo
+    ModelInfo,
+    FileUploadResponse,
+    HistoryResponse,
+    StatsResponse,
+    TextFeatures
 )
 from .predictor import SpamPredictor
 from .config import settings
+from .exceptions import (
+    ModelNotLoadedError,
+    EmptyTextError,
+    TextTooLongError
+)
+from .file_parser import extract_text_from_file
+from . import database
 
 # Configure logging
 logging.basicConfig(
@@ -33,9 +45,13 @@ predictor: SpamPredictor = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle manager for loading/unloading ML models."""
+    """Lifecycle manager for loading/unloading ML models and initializing database."""
     global predictor
     try:
+        logger.info("Initializing database...")
+        database.init_database()
+        logger.info("Database initialized successfully!")
+        
         logger.info("Loading spam detection model...")
         predictor = SpamPredictor(
             model_path=settings.MODEL_PATH,
@@ -45,7 +61,7 @@ async def lifespan(app: FastAPI):
         logger.info("Model loaded successfully!")
         yield
     except Exception as e:
-        logger.error(f"Failed to load model: {e}")
+        logger.error(f"Failed to initialize application: {e}")
         raise
     finally:
         logger.info("Shutting down application...")
@@ -95,7 +111,10 @@ async def root():
         "endpoints": {
             "health": "/health",
             "predict": "/api/v1/predict",
-            "batch_predict": "/api/v1/predict/batch",
+            "predict_file": "/api/v1/predict/file",
+            "history": "/api/v1/history",
+            "stats": "/api/v1/stats",
+            "export": "/api/v1/export/{format}",
             "model_info": "/api/v1/model/info",
             "docs": "/docs"
         }
@@ -164,46 +183,53 @@ async def predict_spam(request: PredictionRequest):
         request: PredictionRequest containing the text to classify
         
     Returns:
-        PredictionResponse: Classification result with confidence score
+        PredictionResponse: Classification result with confidence score and features
         
     Raises:
         HTTPException: If prediction fails or model is not loaded
     """
     try:
         if predictor is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not loaded. Please contact the administrator."
-            )
+            raise ModelNotLoadedError()
         
-        # Validate input
         if not request.text or not request.text.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Text cannot be empty"
-            )
+            raise EmptyTextError()
         
         if len(request.text) > 10000:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Text is too long. Maximum length is 10,000 characters."
-            )
+            raise TextTooLongError(len(request.text))
         
-        # Make prediction
         result = predictor.predict(request.text)
+        numerical_features = predictor.extract_numerical_features(request.text)
         
-        return PredictionResponse(
-            text=request.text[:100] + "..." if len(request.text) > 100 else request.text,
+        timestamp = datetime.utcnow().isoformat()
+        text_preview = request.text[:200] + "..." if len(request.text) > 200 else request.text
+        
+        prediction_id = database.save_prediction(
+            text_preview=text_preview,
             prediction=result["label"],
             confidence=result["confidence"],
             is_spam=result["is_spam"],
             spam_probability=result["spam_probability"],
             ham_probability=result["ham_probability"],
-            timestamp=datetime.utcnow().isoformat(),
-            model_name=result.get("model_name", "Logistic Regression")
+            features=numerical_features,
+            source_type="text",
+            timestamp=timestamp
+        )
+        
+        return PredictionResponse(
+            text=text_preview,
+            prediction=result["label"],
+            confidence=result["confidence"],
+            is_spam=result["is_spam"],
+            spam_probability=result["spam_probability"],
+            ham_probability=result["ham_probability"],
+            features=TextFeatures(**numerical_features),
+            timestamp=timestamp,
+            model_name=result.get("model_name", "Logistic Regression"),
+            prediction_id=prediction_id
         )
     
-    except HTTPException:
+    except (ModelNotLoadedError, EmptyTextError, TextTooLongError):
         raise
     except Exception as e:
         logger.error(f"Prediction error: {e}", exc_info=True)
@@ -213,96 +239,234 @@ async def predict_spam(request: PredictionRequest):
         )
 
 
-@app.post("/api/v1/predict/batch", response_model=BatchPredictionResponse)
-async def predict_batch(request: BatchPredictionRequest):
+@app.post("/api/v1/predict/file", response_model=FileUploadResponse)
+async def predict_file(file: UploadFile = File(...)):
     """
-    Predict spam for multiple texts in a single request.
+    Predict spam for text extracted from uploaded file.
     
     Args:
-        request: BatchPredictionRequest containing multiple texts
+        file: Uploaded file (TXT, PDF, or DOCX)
         
     Returns:
-        BatchPredictionResponse: List of predictions for each text
+        FileUploadResponse: File info and prediction result
         
     Raises:
-        HTTPException: If prediction fails or model is not loaded
+        HTTPException: If file processing or prediction fails
     """
     try:
         if predictor is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not loaded. Please contact the administrator."
-            )
+            raise ModelNotLoadedError()
         
-        # Validate input
-        if not request.texts or len(request.texts) == 0:
+        content = await file.read()
+        
+        extracted_text = extract_text_from_file(content, file.filename)
+        
+        if not extracted_text or not extracted_text.strip():
+            raise EmptyTextError()
+        
+        if len(extracted_text) > 50000:
+            extracted_text = extracted_text[:50000]
+        
+        result = predictor.predict(extracted_text)
+        numerical_features = predictor.extract_numerical_features(extracted_text)
+        
+        timestamp = datetime.utcnow().isoformat()
+        text_preview = extracted_text[:200] + "..." if len(extracted_text) > 200 else extracted_text
+        
+        prediction_id = database.save_prediction(
+            text_preview=text_preview,
+            prediction=result["label"],
+            confidence=result["confidence"],
+            is_spam=result["is_spam"],
+            spam_probability=result["spam_probability"],
+            ham_probability=result["ham_probability"],
+            features=numerical_features,
+            source_type="file",
+            filename=file.filename,
+            timestamp=timestamp
+        )
+        
+        prediction_response = PredictionResponse(
+            text=text_preview,
+            prediction=result["label"],
+            confidence=result["confidence"],
+            is_spam=result["is_spam"],
+            spam_probability=result["spam_probability"],
+            ham_probability=result["ham_probability"],
+            features=TextFeatures(**numerical_features),
+            timestamp=timestamp,
+            model_name=result.get("model_name", "Logistic Regression"),
+            prediction_id=prediction_id
+        )
+        
+        return FileUploadResponse(
+            filename=file.filename,
+            file_size_bytes=len(content),
+            extracted_text_length=len(extracted_text),
+            prediction_result=prediction_response
+        )
+    
+    except (ModelNotLoadedError, EmptyTextError):
+        raise
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File prediction error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"File prediction failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/history", response_model=HistoryResponse)
+async def get_history(limit: int = 50, offset: int = 0):
+    """
+    Get prediction history.
+    
+    Args:
+        limit: Maximum number of predictions to return (default 50)
+        offset: Number of predictions to skip (default 0)
+        
+    Returns:
+        HistoryResponse: List of predictions with pagination info
+    """
+    try:
+        if limit < 1 or limit > 200:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No texts provided"
+                detail="Limit must be between 1 and 200"
             )
         
-        if len(request.texts) > 100:
+        if offset < 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Too many texts. Maximum batch size is 100."
+                detail="Offset must be non-negative"
             )
         
-        # Make predictions
-        predictions = []
-        for idx, text in enumerate(request.texts):
-            if not text or not text.strip():
-                predictions.append({
-                    "text": "",
-                    "prediction": "error",
-                    "confidence": 0.0,
-                    "is_spam": False,
-                    "spam_probability": 0.0,
-                    "ham_probability": 0.0,
-                    "error": "Empty text",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "model_name": "Logistic Regression"
-                })
-                continue
-            
-            try:
-                result = predictor.predict(text)
-                predictions.append({
-                    "text": text[:100] + "..." if len(text) > 100 else text,
-                    "prediction": result["label"],
-                    "confidence": result["confidence"],
-                    "is_spam": result["is_spam"],
-                    "spam_probability": result["spam_probability"],
-                    "ham_probability": result["ham_probability"],
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "model_name": result.get("model_name", "Logistic Regression")
-                })
-            except Exception as e:
-                logger.error(f"Error predicting text {idx}: {e}")
-                predictions.append({
-                    "text": text[:100] + "..." if len(text) > 100 else text,
-                    "prediction": "error",
-                    "confidence": 0.0,
-                    "is_spam": False,
-                    "spam_probability": 0.0,
-                    "ham_probability": 0.0,
-                    "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "model_name": "Logistic Regression"
-                })
+        predictions = database.get_predictions(limit=limit, offset=offset)
         
-        return BatchPredictionResponse(
+        return HistoryResponse(
             predictions=predictions,
             total=len(predictions),
-            timestamp=datetime.utcnow().isoformat()
+            limit=limit,
+            offset=offset
         )
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Batch prediction error: {e}", exc_info=True)
+        logger.error(f"Failed to retrieve history: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Batch prediction failed: {str(e)}"
+            detail=f"Failed to retrieve history: {str(e)}"
+        )
+
+
+@app.delete("/api/v1/history/{prediction_id}")
+async def delete_history_item(prediction_id: int):
+    """
+    Delete a prediction from history.
+    
+    Args:
+        prediction_id: ID of the prediction to delete
+        
+    Returns:
+        dict: Status message
+    """
+    try:
+        deleted = database.delete_prediction(prediction_id)
+        
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Prediction with ID {prediction_id} not found"
+            )
+        
+        return {
+            "message": f"Prediction {prediction_id} deleted successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete prediction {prediction_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete prediction: {str(e)}"
+        )
+
+
+@app.get("/api/v1/stats", response_model=StatsResponse)
+async def get_stats():
+    """
+    Get aggregated statistics and data for visualizations.
+    
+    Returns:
+        StatsResponse: Statistics including time-series, distributions, and aggregates
+    """
+    try:
+        stats = database.get_statistics()
+        return StatsResponse(**stats)
+    
+    except Exception as e:
+        logger.error(f"Failed to retrieve statistics: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve statistics: {str(e)}"
+        )
+
+
+@app.get("/api/v1/export/{format}")
+async def export_predictions(format: str):
+    """
+    Export all predictions in specified format.
+    
+    Args:
+        format: Export format ('csv' or 'json')
+        
+    Returns:
+        StreamingResponse: File download with predictions
+    """
+    try:
+        if format not in ["csv", "json"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Format must be 'csv' or 'json'"
+            )
+        
+        predictions = database.get_all_predictions_for_export()
+        
+        if format == "csv":
+            output = io.StringIO()
+            if predictions:
+                fieldnames = predictions[0].keys()
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(predictions)
+            
+            output.seek(0)
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=predictions.csv"}
+            )
+        
+        else:
+            output = json.dumps(predictions, indent=2)
+            return StreamingResponse(
+                iter([output]),
+                media_type="application/json",
+                headers={"Content-Disposition": "attachment; filename=predictions.json"}
+            )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export predictions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export predictions: {str(e)}"
         )
 
 
