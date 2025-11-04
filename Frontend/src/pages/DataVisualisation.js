@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import Tabs from '../components/Tabs';
+import Chartjs from '../components/ChartjsImplementation';
+
+
+//plotly stuff
+import Plot from 'react-plotly.js';
 
 export default function DataVisualisation() {
   const [tab, setTab] = useState('PLOTLY');
+
   return (
     <div>
       <section className="hero">
@@ -14,16 +20,33 @@ export default function DataVisualisation() {
         {tab === 'PLOTLY' && (
           <>
             <p>Plotly.js implementation here</p>
-            <div id="tester" style="width:600px; height:250px;">
-              <script>
-                TESTER = document.getElementById('tester');
-                Plotly.newPlot(TESTER, [{x: [1,2,3,4,5], y: [1,2,4,8,16]}], { margin: {t:0} });
-              </script>
-            </div>
+            <div id="plotly" style="width:600px; height:250px;"></div>
+            {/* <Plot data={[
+              {
+                x:[1,2,3],
+                y:[2,6,3],
+                type: 'scatter',
+                marker: {color: 'red'},
+              },
+              {type: 'bar', x:[1,2,3], y:[2,5,3]}
+            ]}
+            layout={{width:320, height:240, title: {text: "test plotly"}}}
+            /> */}
           </>
         )}
-        {tab === 'CHART' && <p>Chart.js implementation here</p>}
-        {tab === 'D3' && <p>D3.js implementation here</p>}
+        {tab === 'CHART' && (
+          <>
+            <p>Chart.js implementation here</p>
+            <div id="chartjs" style="width:600px; height:250px;"></div>
+            {/* Chartjs() */}
+          </>
+        )}
+        {tab === 'D3' && (
+          <>
+            <p>D3.js implementation here</p>
+            <div id="d3" style="width:600px; height:250px;"></div>
+          </>
+        )}
       </div>
     </div>
   );
