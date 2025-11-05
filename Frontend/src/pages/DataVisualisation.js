@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Tabs from '../components/Tabs';
 import Chartjs from '../components/ChartjsImplementation';
+import Plotly from '../components/PlotlyImplementation';
 
 export default function DataVisualisation() {
   const [tab, setTab] = useState('PLOTLY');
@@ -14,21 +15,7 @@ export default function DataVisualisation() {
 
       <div className="container">
         {tab === 'PLOTLY' && (
-          <>
-            <p>Plotly.js implementation here</p>
-            <div id="plotly" style={{ width: 600, height: 250 }}></div>
-            {/* <Plot data={[
-              {
-                x:[1,2,3],
-                y:[2,6,3],
-                type: 'scatter',
-                marker: {color: 'red'},
-              },
-              {type: 'bar', x:[1,2,3], y:[2,5,3]}
-            ]}
-            layout={{width:320, height:240, title: {text: "test plotly"}}}
-            /> */}
-          </>
+          <Plotly />
         )}
         {tab === 'CHART' && (
           <Chartjs />
