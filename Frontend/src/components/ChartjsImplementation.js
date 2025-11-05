@@ -1,7 +1,6 @@
 //chart.js stuff
 import {CategoryScale, Chart, LinearScale, LineController, LineElement, PointElement} from 'chart.js';
 import {Canvas} from 'skia-canvas';
-import fsp from 'node:fs/promises';
 
 export default function Chartjs() {
     
@@ -28,7 +27,5 @@ export default function Chartjs() {
         }
     }
     );
-    const pngBuffer = canvas.toBuffer('png', {matte: 'white'});
-    fsp.writeFile('output.png', pngBuffer);
     chart.destroy();
 }

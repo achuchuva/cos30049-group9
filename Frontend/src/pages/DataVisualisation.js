@@ -20,7 +20,7 @@ export default function DataVisualisation() {
         {tab === 'PLOTLY' && (
           <>
             <p>Plotly.js implementation here</p>
-            <div id="plotly" style="width:600px; height:250px;"></div>
+            <div id="plotly" style={{width:600, height:250}}></div>
             {/* <Plot data={[
               {
                 x:[1,2,3],
@@ -37,14 +37,14 @@ export default function DataVisualisation() {
         {tab === 'CHART' && (
           <>
             <p>Chart.js implementation here</p>
-            <div id="chartjs" style="width:600px; height:250px;"></div>
+            <div id="chartjs" style={{width:600, height:250}}></div>
             {/* Chartjs() */}
           </>
         )}
         {tab === 'D3' && (
           <>
             <p>D3.js implementation here</p>
-            <div id="d3" style="width:600px; height:250px;"></div>
+            <div id="d3" style={{width:600, height:250}}></div>
           </>
         )}
       </div>
