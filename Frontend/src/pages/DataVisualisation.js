@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import Tabs from '../components/Tabs';
 import Chartjs from '../components/ChartjsImplementation';
 
-
-//plotly stuff
-import Plot from 'react-plotly.js';
-
 export default function DataVisualisation() {
   const [tab, setTab] = useState('PLOTLY');
 
@@ -13,14 +9,14 @@ export default function DataVisualisation() {
     <div>
       <section className="hero">
         <h1 className="page-title">Data Visualisation</h1>
-        <Tabs tabs={['PLOTLY','CHART','D3']} current={tab} onChange={setTab} />
+        <Tabs tabs={['PLOTLY', 'CHART', 'D3']} current={tab} onChange={setTab} />
       </section>
 
       <div className="container">
         {tab === 'PLOTLY' && (
           <>
             <p>Plotly.js implementation here</p>
-            <div id="plotly" style={{width:600, height:250}}></div>
+            <div id="plotly" style={{ width: 600, height: 250 }}></div>
             {/* <Plot data={[
               {
                 x:[1,2,3],
@@ -35,16 +31,12 @@ export default function DataVisualisation() {
           </>
         )}
         {tab === 'CHART' && (
-          <>
-            <p>Chart.js implementation here</p>
-            <div id="chartjs" style={{width:600, height:250}}></div>
-            {/* Chartjs() */}
-          </>
+          <Chartjs />
         )}
         {tab === 'D3' && (
           <>
             <p>D3.js implementation here</p>
-            <div id="d3" style={{width:600, height:250}}></div>
+            <div id="d3" style={{ width: 600, height: 250 }}></div>
           </>
         )}
       </div>
