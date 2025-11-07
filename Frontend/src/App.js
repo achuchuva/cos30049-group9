@@ -4,8 +4,10 @@ import About from './pages/About';
 import DataVisualisation from './pages/DataVisualisation';
 import Detect from './pages/Detect';
 import './index.css';
+import SpamDemo from './SpamDemo';
 
 export default function App() {
+  // return SpamDemo();
   return (
     <div className="app-shell">
       <header className="topbar">
