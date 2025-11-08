@@ -65,7 +65,7 @@ function Chartjs() {
               backgroundColor: [
                   'rgba(168, 168, 168, 0.82)',
                   'rgba(231, 45, 12, 0.82)',
-                  'rgba(168, 255, 86, 0.6)',
+                  'rgba(123, 255, 0, 0.6)',
               ],
               borderColor: [
                   'rgba(63, 63, 63, 1)',
