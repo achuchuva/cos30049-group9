@@ -14,7 +14,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Frontend deps
-cd ../spamapp
+cd ../Frontend
 npm install
 ```
 
@@ -28,7 +28,7 @@ Visit: http://localhost:8000/docs
 
 ## Run Frontend
 ```bash
-cd spamapp
+cd Frontend
 npm start
 ```
 App: http://localhost:3000
