@@ -1,15 +1,12 @@
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-// import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-// import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
 import axios from 'axios'
 
 import { useEffect, useState } from 'react';
 
 const API_BASE = 'http://localhost:8000';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
-// ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 // export const data = {
 //     labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
@@ -38,7 +35,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 //     ],
 // };
 
-function Chartjs() {
+function ChartjsDoughnut() {
   const [stats, setStats] = useState([null]);
   const [error, setError] = useState(null);
 
@@ -80,9 +77,9 @@ function Chartjs() {
   // return <Doughnut data={data} />;
   return (
     <section>
-      {stats && (<Bar data={data} />)}
+      <Doughnut data={data} />
     </section>
   );
 }
 
-export default Chartjs;
+export default ChartjsDoughnut;

@@ -28,13 +28,13 @@ export default function PlotlyImplementation() {
         <Plot
             data={[
                 {
-                    x: [1, 2, 3],
+                    x: ["Total prediction", "Spam", "Ham"],
                     y: [2, 6, 3],
                     type: 'scatter',
                     mode: 'lines+markers',
                     marker: { color: 'red' },
                 },
-                { type: 'bar', x: [1, 2, 3], y: [stats.total_predictions, stats.spam_count, stats.ham_count] },
+                { type: 'bar', x: ["Total prediction", "Spam", "Ham"], y: [stats.total_predictions, stats.spam_count, stats.ham_count] },
             ]}
             layout={{ width: 1000, height: 750, title: { text: 'A Fancy Plot' } }}
         />
