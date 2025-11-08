@@ -65,6 +65,10 @@ body {
 	gap: 20px;
 }
 
+.button-primary:hover {
+	cursor: pointer;
+}
+
 .navlink {
 	color: #333;
 	text-decoration: none;

@@ -32,7 +32,7 @@ export default function About() {
 						<p className="team-lead">Group 9 • Session 22</p>
 						<p className="team-tutor">Tutor: Yinwei Bao</p>
 						<div className="team-members">
-							<span className="member">Anton Chucuva</span>
+							<span className="member">Anton Chuchuva</span>
 							<span className="member-sep">•</span>
 							<span className="member">Joshua Causon</span>
 							<span className="member-sep">•</span>
