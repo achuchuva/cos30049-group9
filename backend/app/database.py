@@ -2,7 +2,6 @@
 Database operations for prediction history storage.
 """
 import sqlite3
-import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -62,6 +61,14 @@ def init_database() -> None:
             """)
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_created_at ON predictions(created_at)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS processed_emails (
+                    email_uid TEXT PRIMARY KEY
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_email_uid ON processed_emails(email_uid)
             """)
             logger.info(f"Database initialized at {DB_PATH}")
     except Exception as e:
@@ -159,6 +166,34 @@ def get_predictions(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
             return [dict(row) for row in rows]
     except Exception as e:
         logger.error(f"Failed to retrieve predictions: {e}")
+        raise
+
+
+def get_email_predictions(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    """
+    Retrieve email predictions from the database.
+    
+    Args:
+        limit: Maximum number of records to retrieve
+        offset: Number of records to skip
+        
+    Returns:
+        List of prediction dictionaries
+    """
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM predictions
+                WHERE source_type = 'email'
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            """, (limit, offset))
+            
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Failed to retrieve email predictions: {e}")
         raise
 
 
@@ -301,6 +336,42 @@ def get_statistics() -> Dict[str, Any]:
             }
     except Exception as e:
         logger.error(f"Failed to get statistics: {e}")
+        raise
+
+
+def add_processed_email(email_uid: str) -> None:
+    """
+    Add a processed email UID to the database.
+    
+    Args:
+        email_uid: The unique identifier of the email.
+    """
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT OR IGNORE INTO processed_emails (email_uid) VALUES (?)", (email_uid,))
+    except Exception as e:
+        logger.error(f"Failed to add processed email {email_uid}: {e}")
+        raise
+
+
+def is_email_processed(email_uid: str) -> bool:
+    """
+    Check if an email has already been processed.
+    
+    Args:
+        email_uid: The unique identifier of the email.
+        
+    Returns:
+        True if the email has been processed, False otherwise.
+    """
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM processed_emails WHERE email_uid = ?", (email_uid,))
+            return cursor.fetchone() is not None
+    except Exception as e:
+        logger.error(f"Failed to check processed email {email_uid}: {e}")
         raise
 
 

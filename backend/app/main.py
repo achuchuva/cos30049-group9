@@ -20,7 +20,9 @@ from .models import (
     FileUploadResponse,
     HistoryResponse,
     StatsResponse,
-    TextFeatures
+    TextFeatures,
+    EmailDetectionsResponse,
+    EmailMonitorStats
 )
 from .predictor import SpamPredictor
 from .config import settings
@@ -31,6 +33,7 @@ from .exceptions import (
 )
 from .file_parser import extract_text_from_file
 from . import database
+from .email_monitor import EmailMonitor
 
 # Configure logging
 logging.basicConfig(
@@ -39,14 +42,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global predictor instance
+# Global predictor and email monitor instances
 predictor: SpamPredictor = None
+email_monitor: EmailMonitor = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager for loading/unloading ML models and initializing database."""
-    global predictor
+    global predictor, email_monitor
     try:
         logger.info("Initializing database...")
         database.init_database()
@@ -59,13 +63,22 @@ async def lifespan(app: FastAPI):
             scaler_path=settings.SCALER_PATH
         )
         logger.info("Model loaded successfully!")
+        
+        logger.info("Initializing email monitor...")
+        email_monitor = EmailMonitor(predictor)
+        await email_monitor.start()
+        logger.info("Email monitor initialized!")
+        
         yield
     except Exception as e:
         logger.error(f"Failed to initialize application: {e}")
         raise
     finally:
         logger.info("Shutting down application...")
+        if email_monitor:
+            await email_monitor.stop()
         predictor = None
+        email_monitor = None
 
 
 # Initialize FastAPI app
@@ -116,6 +129,8 @@ async def root():
             "stats": "/api/v1/stats",
             "export": "/api/v1/export/{format}",
             "model_info": "/api/v1/model/info",
+            "email_stats": "/api/v1/email/stats",
+            "email_predictions": "/api/v1/email/predictions",
             "docs": "/docs"
         }
     }
@@ -527,6 +542,113 @@ async def clear_cache():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cache clear failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/email/detections", response_model=EmailDetectionsResponse)
+async def get_email_detections(limit: int = 50):
+    """
+    Get recent email spam detections from email monitoring.
+    
+    Args:
+        limit: Maximum number of detections to return (default 50)
+        
+    Returns:
+        EmailDetectionsResponse: List of email detections
+    """
+    try:
+        if email_monitor is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Email monitor not initialized"
+            )
+        
+        detections = email_monitor.get_recent_detections(limit=limit)
+        
+        return EmailDetectionsResponse(
+            detections=detections,
+            total=len(detections)
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve email detections: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve email detections: {str(e)}"
+        )
+
+
+@app.get("/api/v1/email/predictions", response_model=HistoryResponse)
+async def get_email_predictions_history(limit: int = 50, offset: int = 0):
+    """
+    Get email prediction history.
+    
+    Args:
+        limit: Maximum number of predictions to return (default 50)
+        offset: Number of predictions to skip (default 0)
+        
+    Returns:
+        HistoryResponse: List of email predictions with pagination info
+    """
+    try:
+        if limit < 1 or limit > 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Limit must be between 1 and 200"
+            )
+        
+        if offset < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Offset must be non-negative"
+            )
+        
+        predictions = database.get_email_predictions(limit=limit, offset=offset)
+        
+        return HistoryResponse(
+            predictions=predictions,
+            total=len(predictions),
+            limit=limit,
+            offset=offset
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve email prediction history: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve email prediction history: {str(e)}"
+        )
+
+
+@app.get("/api/v1/email/stats", response_model=EmailMonitorStats)
+async def get_email_stats():
+    """
+    Get email monitoring statistics.
+    
+    Returns:
+        EmailMonitorStats: Email monitoring statistics
+    """
+    try:
+        if email_monitor is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Email monitor not initialized"
+            )
+        
+        stats = email_monitor.get_stats()
+        return EmailMonitorStats(**stats)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve email stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve email stats: {str(e)}"
         )
 
 
