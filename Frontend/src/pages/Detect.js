@@ -14,7 +14,12 @@ export default function Detect() {
 	const [isDragging, setIsDragging] = useState(false);
 
 	const handleKeyDown = (e) => {
-		if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
+		if (e.key === 'Enter') {
+			if (e.shiftKey) {
+				return;
+			}
+
+			// Prevent newline and submit on Enter
 			e.preventDefault();
 			if (text.trim()) {
 				handlePredict(e);
@@ -122,7 +127,7 @@ export default function Detect() {
 						<div className="field">
 							<label>Enter Text</label>
 							<textarea
-								placeholder="Enter text to classify... (Press Enter to detect, Ctrl/Cmd+Enter for new line)"
+								placeholder="Enter text to classify... (Press Enter to detect, Shift+Enter for new line)"
 								rows={5}
 								value={text}
 								onChange={(e) => setText(e.target.value)}

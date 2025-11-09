@@ -21,7 +21,7 @@ export default function PlotlyImplementation() {
             })
             .catch((err) => {
                 console.error(err);
-                setError("Failed to load stats");
+				setError("Failed to load stats. Please ensure the backend server is running.");
             });
     }, []);
 

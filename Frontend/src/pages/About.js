@@ -8,6 +8,7 @@ export default function About() {
 	const [modelInfo, setModelInfo] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [deleteId, setDeleteId] = useState('');
 
 	useEffect(() => {
 		fetch(`${API_BASE}/api/v1/model/info`)
@@ -18,10 +19,34 @@ export default function About() {
 			})
 			.catch(err => {
 				console.error(err);
-				setError('Failed to load model info');
+				setError("Failed to load model info. Please ensure the backend server is running.");
 				setLoading(false);
 			});
 	}, []);
+
+	const handleDelete = () => {
+		if (!deleteId || isNaN(parseInt(deleteId))) {
+			alert('Please enter a valid prediction ID.');
+			return;
+		}
+		fetch(`${API_BASE}/api/v1/history/${deleteId}`, {
+			method: 'DELETE',
+		})
+		.then(res => {
+			if (res.ok) {
+				alert(`Prediction with ID ${deleteId} deleted successfully.`);
+				setDeleteId('');
+			} else {
+				res.json().then(data => {
+					alert(`Failed to delete prediction: ${data.detail || 'Unknown error'}`);
+				});
+			}
+		})
+		.catch(err => {
+			console.error(err);
+			alert('An error occurred while trying to delete the prediction.');
+		});
+	};
 
 	return (
 		<div>
@@ -192,6 +217,35 @@ export default function About() {
 							<div style={{ marginBottom: '1.2rem', paddingLeft: '1rem', borderLeft: '3px solid #e2a44a' }}>
 								<h4 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>DELETE /api/v1/history/:prediction_id</h4>
 								<p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0' }}>Delete a specific prediction from history</p>
+								<div style={{ marginTop: '0.5rem', display: 'flex', gap: '8px' }}>
+									<input
+										type="text"
+										value={deleteId}
+										onChange={(e) => setDeleteId(e.target.value)}
+										placeholder="ID"
+										style={{
+											padding: '6px 12px',
+											fontSize: '0.85rem',
+											border: '1px solid #ccc',
+											borderRadius: '4px',
+											width: '80px'
+										}}
+									/>
+									<button
+										onClick={handleDelete}
+										style={{
+											padding: '6px 12px',
+											fontSize: '0.85rem',
+											background: '#e74c3c',
+											color: '#fff',
+											border: 'none',
+											borderRadius: '4px',
+											cursor: 'pointer'
+										}}
+									>
+										Delete Prediction
+									</button>
+								</div>
 							</div>
 
 							<div style={{ paddingLeft: '1rem', borderLeft: '3px solid #e2a44a' }}>
