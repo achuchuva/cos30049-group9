@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const API_BASE = 'http://localhost:8000';
 
-function PlotlyDoughnut() {
+function PlotlyPie() {
     const [stats, setStats] = useState([null]);
     const [error, setError] = useState(null);
 
@@ -49,4 +49,4 @@ function PlotlyDoughnut() {
     );
 }
 
-export default PlotlyDoughnut;
+export default PlotlyPie;

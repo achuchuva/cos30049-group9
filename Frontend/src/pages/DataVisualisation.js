@@ -3,7 +3,7 @@ import Tabs from '../components/Tabs';
 import ChartjsBar from '../components/ChartjsBar';
 import ChartjsDoughnut from '../components/ChartjsDoughnut';
 import PlotlyBar from '../components/PlotlyBar';
-import PlotlyDoughnut from '../components/PlotlyDoughnut';
+import PlotlyPie from '../components/PlotlyPie';
 import axios from 'axios'
 
 const API_BASE = 'http://localhost:8000';
