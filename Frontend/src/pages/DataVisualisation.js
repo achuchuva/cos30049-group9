@@ -3,7 +3,7 @@ import Tabs from '../components/Tabs';
 import ChartjsBar from '../components/ChartjsBar';
 import ChartjsDoughnut from '../components/ChartjsDoughnut';
 import PlotlyBar from '../components/PlotlyBar';
-import PlotlyPie from '../components/PlotlyPie';
+import PlotlyLine from '../components/PlotlyLine';
 import axios from 'axios'
 
 const API_BASE = 'http://localhost:8000';
@@ -90,7 +90,7 @@ export default function DataVisualisation() {
         {tab === 'PLOTLY' && (
           <>
             <PlotlyBar />
-            <PlotlyDoughnut />
+            <PlotlyLine />
           </>
         )}
         {tab === 'CHART' && (
