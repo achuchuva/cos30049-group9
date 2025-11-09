@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     MAX_TEXT_LENGTH: int = 10000
     MAX_BATCH_SIZE: int = 100
     
+    # Email Monitoring Settings
+    EMAIL_IMAP_HOST: str = "imap.fastmail.com"
+    EMAIL_IMAP_PORT: int = 993
+    EMAIL_ADDRESS: str = ""
+    EMAIL_PASSWORD: str = ""
+    EMAIL_POLL_INTERVAL: int = 10  # seconds
+    EMAIL_MONITORING_ENABLED: bool = False
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

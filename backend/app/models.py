@@ -152,3 +152,34 @@ class StatsResponse(BaseModel):
     confidence_distribution: List[Dict[str, Any]]
     feature_distribution: List[Dict[str, Any]]
 
+
+class EmailDetection(BaseModel):
+    """Response model for email spam detection."""
+    timestamp: str = Field(..., description="Detection timestamp")
+    subject: str = Field(..., description="Email subject")
+    sender: str = Field(..., description="Email sender")
+    is_spam: bool = Field(..., description="Whether email is spam")
+    prediction: str = Field(..., description="Prediction label: 'spam' or 'ham'")
+    confidence: float = Field(..., description="Confidence score", ge=0.0, le=1.0)
+    spam_probability: float = Field(..., description="Spam probability", ge=0.0, le=1.0)
+    ham_probability: float = Field(..., description="Ham probability", ge=0.0, le=1.0)
+    features: TextFeatures = Field(..., description="Extracted features")
+    text_preview: str = Field(..., description="Preview of email text")
+
+
+class EmailDetectionsResponse(BaseModel):
+    """Response model for list of email detections."""
+    detections: List[Dict[str, Any]] = Field(..., description="List of email detections")
+    total: int = Field(..., description="Total detections")
+
+
+class EmailMonitorStats(BaseModel):
+    """Response model for email monitor statistics."""
+    enabled: bool = Field(..., description="Whether monitoring is enabled")
+    is_running: bool = Field(..., description="Whether monitor is currently running")
+    last_check_time: Optional[str] = Field(None, description="Last check timestamp")
+    total_processed: int = Field(..., description="Total emails processed")
+    spam_detected: int = Field(..., description="Spam emails detected")
+    ham_detected: int = Field(..., description="Ham emails detected")
+    poll_interval: int = Field(..., description="Poll interval in seconds")
+
