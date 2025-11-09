@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const API_BASE = 'http://localhost:8000';
 
-export default function PlotlyImplementation() {
+function PlotlyBar() {
     const [stats, setStats] = useState([null]);
     const [error, setError] = useState(null);
 
@@ -25,18 +25,25 @@ export default function PlotlyImplementation() {
     },[]);
     
     return (
-        <Plot
-            data={[
-                {
-                    x: ["Total prediction", "Spam", "Ham"],
-                    y: [2, 6, 3],
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    marker: { color: 'red' },
-                },
-                { type: 'bar', x: ["Total prediction", "Spam", "Ham"], y: [stats.total_predictions, stats.spam_count, stats.ham_count] },
-            ]}
-            layout={{ width: 1000, height: 750, title: { text: 'A Fancy Plot' } }}
-        />
+        <section>
+            <Plot
+                data={[
+                    { 
+                        type: 'bar', 
+                        x: ["Total prediction", "Spam", "Ham"], 
+                        y: [stats.total_predictions, stats.spam_count, stats.ham_count] ,
+                        marker: {color: ['gray', 'red', 'green'] },
+                    },
+                ]}
+                layout={{ 
+                    width: 1000, 
+                    height: 750, 
+                    title: { text: 'Bar chart prediction statistics' } 
+                }}
+            />
+        </section>
     );
 }
+
+
+export default PlotlyBar;

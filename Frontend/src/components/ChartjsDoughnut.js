@@ -54,18 +54,16 @@ function ChartjsDoughnut() {
     },[]);
   
   const data = {
-      labels: ['Total predictions', 'Spam', 'Ham'],
+      labels: ['Spam', 'Ham'],
       datasets: [
           {
               label: 'Statistics',
-              data: [stats.total_predictions, stats.spam_count, stats.ham_count],
+              data: [stats.spam_count, stats.ham_count],
               backgroundColor: [
-                  'rgba(168, 168, 168, 0.82)',
                   'rgba(231, 45, 12, 0.82)',
                   'rgba(123, 255, 0, 0.6)',
               ],
               borderColor: [
-                  'rgba(63, 63, 63, 1)',
                   'rgba(235, 54, 54, 1)',
                   'rgba(125, 255, 86, 1)',
               ],
