@@ -4,6 +4,10 @@ import Tabs from '../components/Tabs';
 import Chartjs from '../components/ChartjsImplementation';
 import Plotly from '../components/PlotlyImplementation';
 import D3 from '../components/D3Implementation';
+import ChartjsDoughnut from '../components/ChartjsDoughnut';
+import ChartjsBar from '../components/ChartjsBar';
+import PlotlyBar from '../components/PlotlyBar';
+import PlotlyLine from '../components/PlotlyLine';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -71,7 +75,10 @@ export default function Results() {
 
 			<div className="container">
 				{tab === 'PLOTLY' && (
-					<Plotly />
+					<>
+						<Plotly />
+						<PlotlyBar />
+					</>
 				)}
 				{tab === 'CHART' && (
 					<Chartjs />
